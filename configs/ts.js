@@ -146,7 +146,7 @@ export default tseslint.config(
         'error',
         {
           countVoidThis: false,
-          max: 4,
+          max: 5,
         },
       ],
       '@typescript-eslint/no-array-delete': 'error',
@@ -165,7 +165,7 @@ export default tseslint.config(
       'no-shadow': 'off',
       '@typescript-eslint/no-shadow': 'error',
       '@typescript-eslint/no-this-alias': 'error',
-      '@typescript-eslint/no-unnecessary-boolean-literal-compare': 'error',
+      '@typescript-eslint/no-unnecessary-boolean-literal-compare': 'off',
       '@typescript-eslint/no-unnecessary-condition': 'error',
       '@typescript-eslint/no-unnecessary-parameter-property-assignment': 'error',
       '@typescript-eslint/no-unnecessary-template-expression': 'error',

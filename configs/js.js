@@ -10,6 +10,7 @@ const prettierPrintWidth = 85
 const ignores = [
   '**/node_modules/**',
   '**/.git/**',
+  '**/.github/**',
   '**/.hg/**',
   '**/.svn/**',
   '**/dist/**',
@@ -20,12 +21,13 @@ const ignores = [
   '**/.next/**',
   '**/.nuxt/**',
   '**/.astro/**',
+  '**/.wrangler/**',
   '**/.output/**',
-  '**/.svelte-kit/**',
-  '**/.turbo/**',
   '**/.vite/**',
+  '**/.idea/**',
   '**/storybook-static/**',
   '**/tmp/**',
+  '**/.tmp/**',
   '**/temp/**',
 ]
 
@@ -112,7 +114,7 @@ export default [
       'max-classes-per-file': ['error', 3],
       'max-depth': ['error', 3],
       'max-nested-callbacks': ['error', 4],
-      'max-params': ['error', 4],
+      'max-params': ['error', 5],
       'no-alert': 'error',
       'no-case-declarations': 'off',
       'no-console': 'off',
