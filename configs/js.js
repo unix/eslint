@@ -16,6 +16,7 @@ const ignores = [
   '**/.eslintcache',
   '**/.next/**',
   '**/.nuxt/**',
+  '**/.astro/**',
   '**/.output/**',
   '**/.svelte-kit/**',
   '**/.turbo/**',
