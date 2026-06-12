@@ -40,6 +40,9 @@ export default [
     languageOptions: {
       ecmaVersion: 'latest',
     },
+    plugins: {
+      '@stylistic': stylistic,
+    },
   },
   {
     ...eslint.configs.recommended,
