@@ -1,6 +1,5 @@
 const NormalizeStatus = status => {
   if (status === 'active') return 'enabled'
-
   return 'paused'
 }
 

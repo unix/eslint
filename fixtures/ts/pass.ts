@@ -7,7 +7,6 @@ type AuditPayload = {
 
 const NormalizeState = (state: AuditState) => {
   if (state === 'active') return 'enabled'
-
   return 'paused'
 }
 

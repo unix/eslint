@@ -1,18 +1,13 @@
 const lineBreakFor = sourceCode => (sourceCode.text.includes('\r\n') ? '\r\n' : '\n')
 
-const LONG_BLOCK_MIN_LINES = 4
-
 const indentationFor = (sourceCode, token) => {
   const line = sourceCode.lines[token.loc.start.line - 1] ?? ''
 
   return line.slice(0, token.loc.start.column)
 }
 
-const spacingBefore = (sourceCode, token, blankLines) =>
-  `${lineBreakFor(sourceCode).repeat(blankLines + 1)}${indentationFor(
-    sourceCode,
-    token,
-  )}`
+const spacingBefore = (sourceCode, token) =>
+  `${lineBreakFor(sourceCode)}${indentationFor(sourceCode, token)}`
 
 const paddingLineSequencesBetween = (sourceCode, leftToken, rightToken) => {
   const sequences = []
@@ -48,55 +43,6 @@ const hasTokensBetween = (sourceCode, leftToken, rightToken) =>
   sourceCode.getTokensBetween(leftToken, rightToken, { includeComments: true })
     .length > 0
 
-const reportPadding = (
-  context,
-  sourceCode,
-  node,
-  leftToken,
-  rightToken,
-  maxBlankLines,
-  messageId,
-) => {
-  const sequences = paddingLineSequencesBetween(sourceCode, leftToken, rightToken)
-
-  if (blankLineCount(sequences) <= maxBlankLines) return
-
-  const [firstSequence] = sequences
-
-  context.report({
-    fix(fixer) {
-      if (hasTokensBetween(sourceCode, leftToken, rightToken)) return null
-
-      return fixer.replaceTextRange(
-        [leftToken.range[1], rightToken.range[0]],
-        spacingBefore(sourceCode, rightToken, maxBlankLines),
-      )
-    },
-    loc: {
-      end: firstSequence.rightToken.loc.start,
-      start: {
-        column: 0,
-        line: firstSequence.leftToken.loc.end.line + 1,
-      },
-    },
-    messageId,
-    node,
-  })
-}
-
-const isReturnStatement = node => node.type === 'ReturnStatement'
-
-const isCompactReturnIfStatement = node =>
-  node.type === 'IfStatement' &&
-  !node.alternate &&
-  isReturnStatement(node.consequent) &&
-  node.loc.start.line === node.consequent.loc.start.line
-
-const isReturnLikeStatement = node =>
-  isReturnStatement(node) || isCompactReturnIfStatement(node)
-
-const lineCountFor = node => node.loc.end.line - node.loc.start.line + 1
-
 const hasBlockBody = node => {
   if (node.type === 'BlockStatement') return true
   if (node.type === 'FunctionDeclaration') return true
@@ -111,103 +57,56 @@ const hasBlockBody = node => {
   return node.body?.type === 'BlockStatement'
 }
 
-const isLongBlockStatement = node =>
-  hasBlockBody(node) && lineCountFor(node) >= LONG_BLOCK_MIN_LINES
+const isSingleLineStatement = node => node.loc.start.line === node.loc.end.line
 
-const messageIdForStatementGap = (previousStatement, nextStatement) => {
-  if (isReturnStatement(previousStatement)) return 'unexpectedBlankLineAfterReturn'
-  if (isReturnLikeStatement(nextStatement)) return 'tooManyBlankLinesBeforeReturn'
+const isRestrictedStatement = node =>
+  isSingleLineStatement(node) && !hasBlockBody(node)
 
-  return 'unexpectedBlankLine'
-}
-
-const maxBlankLinesForStatementGap = (previousStatement, nextStatement) => {
-  if (isReturnStatement(previousStatement)) return 0
-  if (isReturnLikeStatement(nextStatement)) return 1
-  if (isLongBlockStatement(previousStatement)) return 1
-  if (isLongBlockStatement(nextStatement)) return 1
-
-  return 0
-}
-
-const checkStatementList = (
+const reportUnexpectedBlankLine = (
   context,
   sourceCode,
-  node,
-  statements,
-  leftToken,
-  rightToken,
+  previousStatement,
+  nextStatement,
 ) => {
-  if (statements.length === 0) {
-    reportPadding(
-      context,
-      sourceCode,
-      node,
-      leftToken,
-      rightToken,
-      0,
-      'unexpectedBlankLine',
-    )
-    return
-  }
+  const leftToken = sourceCode.getLastToken(previousStatement)
+  const rightToken = sourceCode.getFirstToken(nextStatement)
+  const sequences = paddingLineSequencesBetween(sourceCode, leftToken, rightToken)
 
-  const [firstStatement] = statements
-  const lastStatement = statements[statements.length - 1]
+  if (blankLineCount(sequences) === 0) return
 
-  reportPadding(
-    context,
-    sourceCode,
-    firstStatement,
-    leftToken,
-    sourceCode.getFirstToken(firstStatement),
-    0,
-    'unexpectedBlankLine',
-  )
+  const [firstSequence] = sequences
 
+  context.report({
+    fix(fixer) {
+      if (hasTokensBetween(sourceCode, leftToken, rightToken)) return null
+
+      return fixer.replaceTextRange(
+        [leftToken.range[1], rightToken.range[0]],
+        spacingBefore(sourceCode, rightToken),
+      )
+    },
+    loc: {
+      end: firstSequence.rightToken.loc.start,
+      start: {
+        column: 0,
+        line: firstSequence.leftToken.loc.end.line + 1,
+      },
+    },
+    messageId: 'unexpectedBlankLine',
+    node: nextStatement,
+  })
+}
+
+const checkStatementPairs = (context, sourceCode, statements) => {
   for (let index = 1; index < statements.length; index += 1) {
     const previousStatement = statements[index - 1]
     const nextStatement = statements[index]
 
-    reportPadding(
-      context,
-      sourceCode,
-      nextStatement,
-      sourceCode.getLastToken(previousStatement),
-      sourceCode.getFirstToken(nextStatement),
-      maxBlankLinesForStatementGap(previousStatement, nextStatement),
-      messageIdForStatementGap(previousStatement, nextStatement),
-    )
+    if (!isRestrictedStatement(previousStatement)) continue
+    if (!isRestrictedStatement(nextStatement)) continue
+
+    reportUnexpectedBlankLine(context, sourceCode, previousStatement, nextStatement)
   }
-
-  reportPadding(
-    context,
-    sourceCode,
-    lastStatement,
-    sourceCode.getLastToken(lastStatement),
-    rightToken,
-    0,
-    isReturnStatement(lastStatement)
-      ? 'unexpectedBlankLineAfterReturn'
-      : 'unexpectedBlankLine',
-  )
-}
-
-const caseColonToken = (sourceCode, node) => {
-  const tokenBeforeConsequent = sourceCode.getTokenBefore(node.consequent[0])
-
-  if (tokenBeforeConsequent?.value === ':') return tokenBeforeConsequent
-
-  const firstToken = sourceCode.getFirstToken(node)
-
-  return sourceCode.getTokenAfter(firstToken, {
-    filter: token => token.value === ':',
-  })
-}
-
-const caseEndToken = (sourceCode, node) => {
-  const lastStatement = node.consequent[node.consequent.length - 1]
-
-  return sourceCode.getTokenAfter(sourceCode.getLastToken(lastStatement))
 }
 
 const functionBlankLines = {
@@ -215,14 +114,12 @@ const functionBlankLines = {
     type: 'layout',
     docs: {
       description:
-        'Disallow extra blank lines in functions except before return statements',
+        'Disallow blank lines between adjacent single-line non-block statements',
     },
     fixable: 'whitespace',
     messages: {
-      tooManyBlankLinesBeforeReturn:
-        'Return statements may have at most one blank line above them.',
-      unexpectedBlankLine: 'Unexpected blank line inside function.',
-      unexpectedBlankLineAfterReturn: 'Unexpected blank line after return.',
+      unexpectedBlankLine:
+        'Unexpected blank line between adjacent single-line statements.',
     },
     schema: [],
   },
@@ -246,14 +143,7 @@ const functionBlankLines = {
       BlockStatement(node) {
         if (!isInsideFunction()) return
 
-        checkStatementList(
-          context,
-          sourceCode,
-          node,
-          node.body,
-          sourceCode.getFirstToken(node),
-          sourceCode.getLastToken(node),
-        )
+        checkStatementPairs(context, sourceCode, node.body)
       },
       FunctionDeclaration: enterFunction,
       'FunctionDeclaration:exit': exitFunction,
@@ -261,16 +151,8 @@ const functionBlankLines = {
       'FunctionExpression:exit': exitFunction,
       SwitchCase(node) {
         if (!isInsideFunction()) return
-        if (node.consequent.length === 0) return
 
-        checkStatementList(
-          context,
-          sourceCode,
-          node,
-          node.consequent,
-          caseColonToken(sourceCode, node),
-          caseEndToken(sourceCode, node),
-        )
+        checkStatementPairs(context, sourceCode, node.consequent)
       },
     }
   },
