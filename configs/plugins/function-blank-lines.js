@@ -1,5 +1,7 @@
 const lineBreakFor = sourceCode => (sourceCode.text.includes('\r\n') ? '\r\n' : '\n')
 
+const LONG_BLOCK_MIN_LINES = 4
+
 const indentationFor = (sourceCode, token) => {
   const line = sourceCode.lines[token.loc.start.line - 1] ?? ''
 
@@ -84,6 +86,25 @@ const reportPadding = (
 
 const isReturnStatement = node => node.type === 'ReturnStatement'
 
+const lineCountFor = node => node.loc.end.line - node.loc.start.line + 1
+
+const hasBlockBody = node => {
+  if (node.type === 'BlockStatement') return true
+  if (node.type === 'FunctionDeclaration') return true
+  if (node.type === 'SwitchStatement') return true
+  if (node.type === 'TryStatement') return true
+  if (node.type === 'IfStatement') {
+    if (hasBlockBody(node.consequent)) return true
+
+    return Boolean(node.alternate && hasBlockBody(node.alternate))
+  }
+
+  return node.body?.type === 'BlockStatement'
+}
+
+const isLongBlockStatement = node =>
+  hasBlockBody(node) && lineCountFor(node) >= LONG_BLOCK_MIN_LINES
+
 const messageIdForStatementGap = (previousStatement, nextStatement) => {
   if (isReturnStatement(previousStatement)) return 'unexpectedBlankLineAfterReturn'
   if (isReturnStatement(nextStatement)) return 'tooManyBlankLinesBeforeReturn'
@@ -94,6 +115,8 @@ const messageIdForStatementGap = (previousStatement, nextStatement) => {
 const maxBlankLinesForStatementGap = (previousStatement, nextStatement) => {
   if (isReturnStatement(previousStatement)) return 0
   if (isReturnStatement(nextStatement)) return 1
+  if (isLongBlockStatement(previousStatement)) return 1
+  if (isLongBlockStatement(nextStatement)) return 1
 
   return 0
 }
