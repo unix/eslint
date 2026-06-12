@@ -1,6 +1,6 @@
 {
   "name": "@unix/eslint",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "ESLint config for all @unix projects.",
   "type": "module",
   "main": "index.js",

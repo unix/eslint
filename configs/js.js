@@ -46,7 +46,6 @@ export default [
     files: jsFiles,
   },
   withJsFiles(stylistic.configs['disable-legacy']),
-  withJsFiles(stylistic.configs.recommended),
   {
     files: jsFiles,
     rules: {
