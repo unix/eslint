@@ -127,6 +127,7 @@ export default [
       'no-var': 'error',
       'prefer-rest-params': 'error',
       'no-else-return': ['error', { allowElseIf: false }],
+      '@unix/function-blank-lines': 'error',
       '@unix/compact-nonblock-statement': [
         'error',
         { maxLineLength: prettierPrintWidth },

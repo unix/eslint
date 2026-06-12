@@ -43,6 +43,12 @@ const previewCases = [
 
 const fixPreviewCases = [
   {
+    config: 'configs/js.js',
+    expected: 'fixtures/js/function-blank-lines.expected.js',
+    name: 'js function blank lines fix fixture',
+    source: 'fixtures/js/function-blank-lines.input.js',
+  },
+  {
     config: 'configs/ts.js',
     expected: 'fixtures/ts/control-flow-style.expected.ts',
     name: 'ts control flow style fix fixture',

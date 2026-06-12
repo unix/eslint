@@ -123,6 +123,7 @@ export default tseslint.config(
       '@typescript-eslint/no-floating-promises': 'warn',
       'func-style': ['error', 'expression', { allowArrowFunctions: true }],
       'no-else-return': ['error', { allowElseIf: false }],
+      '@unix/function-blank-lines': 'error',
       '@unix/compact-nonblock-statement': [
         'error',
         { maxLineLength: prettierPrintWidth },
