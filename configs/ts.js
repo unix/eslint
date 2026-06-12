@@ -73,13 +73,6 @@ const classMemberOrder = [
   ],
 ]
 
-const recommendedTypeChecked = tseslint.configs.recommendedTypeChecked.map(
-  config => ({
-    ...config,
-    files: config.files ?? tsFiles,
-  }),
-)
-
 const withTsFiles = config => ({
   ...config,
   files: tsFiles,
@@ -91,7 +84,6 @@ export default tseslint.config(
     ...eslint.configs.recommended,
     files: tsFiles,
   },
-  ...recommendedTypeChecked,
   {
     files: tsFiles,
     languageOptions: {
