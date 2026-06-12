@@ -1,8 +1,11 @@
 // @ts-check
 import eslint from '@eslint/js'
-import stylistic from '@stylistic/eslint-plugin'
+import prettierRecommended from 'eslint-plugin-prettier/recommended'
+
+import internal from './plugins/index.js'
 
 const jsFiles = ['**/*.{js,mjs,cjs,jsx}']
+const prettierPrintWidth = 85
 
 const ignores = [
   '**/node_modules/**',
@@ -41,14 +44,13 @@ export default [
       ecmaVersion: 'latest',
     },
     plugins: {
-      '@stylistic': stylistic,
+      '@unix': internal,
     },
   },
   {
     ...eslint.configs.recommended,
     files: jsFiles,
   },
-  withJsFiles(stylistic.configs['disable-legacy']),
   {
     files: jsFiles,
     rules: {
@@ -88,7 +90,6 @@ export default [
       'no-template-curly-in-string': 'error',
       'no-unassigned-vars': 'warn',
       'no-undef': 'error',
-      'no-unexpected-multiline': 'error',
       'no-unmodified-loop-condition': 'error',
       'no-unreachable': 'warn',
       'no-unsafe-finally': 'error',
@@ -100,7 +101,6 @@ export default [
       'require-atomic-updates': 'error',
       'use-isnan': 'error',
       'valid-typeof': 'error',
-      'arrow-body-style': ['error', 'as-needed'],
       'block-scoped-var': 'error',
       complexity: ['error', 3],
       'consistent-return': 'off',
@@ -123,18 +123,14 @@ export default [
       'no-regex-spaces': 'error',
       'no-useless-return': 'off',
       'no-var': 'error',
-      'prefer-arrow-callback': 'error',
       'prefer-rest-params': 'error',
       'no-else-return': ['error', { allowElseIf: false }],
-      curly: ['error', 'multi'],
-      '@stylistic/array-bracket-newline': ['error', 'consistent'],
-      '@stylistic/array-element-newline': ['error', 'consistent'],
-      '@stylistic/arrow-parens': ['error', 'as-needed'],
-      '@stylistic/implicit-arrow-linebreak': ['error', 'beside'],
-      '@stylistic/linebreak-style': ['error', 'unix'],
-      '@stylistic/multiline-comment-style': ['error', 'bare-block'],
-      '@stylistic/no-multiple-empty-lines': ['error', { max: 2, maxEOF: 1 }],
-      '@stylistic/nonblock-statement-body-position': ['error', 'beside'],
+      '@unix/compact-nonblock-statement': [
+        'error',
+        { maxLineLength: prettierPrintWidth },
+      ],
+      '@unix/compact-return-if': 'error',
     },
   },
+  withJsFiles(prettierRecommended),
 ]

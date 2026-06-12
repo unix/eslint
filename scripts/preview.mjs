@@ -1,6 +1,9 @@
 import { spawnSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+
+import { ESLint } from 'eslint'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const eslintBin = resolve(
@@ -38,6 +41,15 @@ const previewCases = [
   },
 ]
 
+const fixPreviewCases = [
+  {
+    config: 'configs/ts.js',
+    expected: 'fixtures/ts/control-flow-style.expected.ts',
+    name: 'ts control flow style fix fixture',
+    source: 'fixtures/ts/control-flow-style.input.ts',
+  },
+]
+
 let hasUnexpectedResult = false
 
 for (const previewCase of previewCases) {
@@ -70,6 +82,51 @@ for (const previewCase of previewCases) {
   console.error(
     `unexpected exit: got ${result.status}, expected ${previewCase.expectedStatus}`,
   )
+}
+
+for (const fixPreviewCase of fixPreviewCases) {
+  console.log(`\n> ${fixPreviewCase.name}`)
+
+  const sourcePath = resolve(root, fixPreviewCase.source)
+  const expectedPath = resolve(root, fixPreviewCase.expected)
+  const { default: config } = await import(
+    pathToFileURL(resolve(root, fixPreviewCase.config))
+  )
+  const eslint = new ESLint({
+    fix: true,
+    overrideConfig: config,
+    overrideConfigFile: true,
+  })
+  const source = readFileSync(sourcePath, 'utf8')
+  const expected = readFileSync(expectedPath, 'utf8')
+  const [result] = await eslint.lintText(source, { filePath: sourcePath })
+  const fixed = result.output ?? source
+
+  if (result.messages.length > 0) {
+    hasUnexpectedResult = true
+    console.error('unexpected lint messages after fix')
+    console.error(
+      result.messages
+        .map(
+          message =>
+            `${message.line}:${message.column} ${message.ruleId} ${message.message}`,
+        )
+        .join('\n'),
+    )
+    continue
+  }
+
+  if (fixed === expected) {
+    console.log('ok: fixed output matches expected')
+    continue
+  }
+
+  hasUnexpectedResult = true
+  console.error('fixed output does not match expected')
+  console.error('\nexpected:\n')
+  console.error(expected.trimEnd())
+  console.error('\nactual:\n')
+  console.error(fixed.trimEnd())
 }
 
 if (hasUnexpectedResult) process.exitCode = 1

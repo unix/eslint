@@ -1,11 +1,13 @@
 // @ts-check
 import eslint from '@eslint/js'
-import stylistic from '@stylistic/eslint-plugin'
+import prettierRecommended from 'eslint-plugin-prettier/recommended'
 import tseslint from 'typescript-eslint'
 
 import js from './js.js'
+import internal from './plugins/index.js'
 
 const tsFiles = ['**/*.{ts,mts,cts,tsx}']
+const prettierPrintWidth = 85
 
 const classMemberOrder = [
   [
@@ -98,9 +100,10 @@ export default tseslint.config(
         projectService: true,
       },
     },
+    plugins: {
+      '@unix': internal,
+    },
   },
-  withTsFiles(stylistic.configs['disable-legacy']),
-  withTsFiles(stylistic.configs.recommended),
   {
     files: tsFiles,
     rules: {
@@ -120,6 +123,11 @@ export default tseslint.config(
       '@typescript-eslint/no-floating-promises': 'warn',
       'func-style': ['error', 'expression', { allowArrowFunctions: true }],
       'no-else-return': ['error', { allowElseIf: false }],
+      '@unix/compact-nonblock-statement': [
+        'error',
+        { maxLineLength: prettierPrintWidth },
+      ],
+      '@unix/compact-return-if': 'error',
       '@typescript-eslint/await-thenable': 'error',
       '@typescript-eslint/consistent-generic-constructors': ['error', 'constructor'],
       '@typescript-eslint/consistent-type-exports': 'error',
@@ -188,4 +196,5 @@ export default tseslint.config(
       '@typescript-eslint/unified-signatures': 'error',
     },
   },
+  withTsFiles(prettierRecommended),
 )
