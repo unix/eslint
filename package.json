@@ -1,0 +1,52 @@
+{
+  "name": "@unix/eslint",
+  "version": "0.1.0",
+  "description": "ESLint config for all @unix projects.",
+  "type": "module",
+  "main": "index.js",
+  "author": "@unix",
+  "prettier": "@unix/prettier",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "preview": "node scripts/preview.mjs",
+    "release": "pnpm publish --access public --no-git-checks"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./js": "./configs/js.js",
+    "./ts": "./configs/ts.js"
+  },
+  "files": [
+    "index.js",
+    "configs",
+    "package.json",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unix/eslint"
+  },
+  "keywords": [
+    "eslint",
+    "eslint-config",
+    "unix"
+  ],
+  "sideEffects": false,
+  "packageManager": "pnpm@11.5.1",
+  "peerDependencies": {
+    "eslint": ">=9.0.0",
+    "typescript": ">=4.8.4 <6.1.0"
+  },
+  "dependencies": {
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "typescript-eslint": "^8.59.2"
+  },
+  "devDependencies": {
+    "@unix/prettier": "^0.1.0",
+    "prettier": "^3.8.4"
+  },
+  "license": "MIT"
+}
