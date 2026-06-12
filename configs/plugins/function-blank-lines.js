@@ -86,6 +86,15 @@ const reportPadding = (
 
 const isReturnStatement = node => node.type === 'ReturnStatement'
 
+const isCompactReturnIfStatement = node =>
+  node.type === 'IfStatement' &&
+  !node.alternate &&
+  isReturnStatement(node.consequent) &&
+  node.loc.start.line === node.consequent.loc.start.line
+
+const isReturnLikeStatement = node =>
+  isReturnStatement(node) || isCompactReturnIfStatement(node)
+
 const lineCountFor = node => node.loc.end.line - node.loc.start.line + 1
 
 const hasBlockBody = node => {
@@ -107,14 +116,14 @@ const isLongBlockStatement = node =>
 
 const messageIdForStatementGap = (previousStatement, nextStatement) => {
   if (isReturnStatement(previousStatement)) return 'unexpectedBlankLineAfterReturn'
-  if (isReturnStatement(nextStatement)) return 'tooManyBlankLinesBeforeReturn'
+  if (isReturnLikeStatement(nextStatement)) return 'tooManyBlankLinesBeforeReturn'
 
   return 'unexpectedBlankLine'
 }
 
 const maxBlankLinesForStatementGap = (previousStatement, nextStatement) => {
   if (isReturnStatement(previousStatement)) return 0
-  if (isReturnStatement(nextStatement)) return 1
+  if (isReturnLikeStatement(nextStatement)) return 1
   if (isLongBlockStatement(previousStatement)) return 1
   if (isLongBlockStatement(nextStatement)) return 1
 

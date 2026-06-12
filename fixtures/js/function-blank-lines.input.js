@@ -33,6 +33,15 @@ const readImmediate = value => {
   return normalized
 }
 
+const readGuardAccess = context => {
+  const required = String(context)
+
+
+  if (required) return true
+  const denied = false
+  return denied
+}
+
 const readBlockStatus = active => {
   const prefix = 'status'
   const labels = []
@@ -68,6 +77,7 @@ export {
   readBlockStatus,
   readCompactBlock,
   readFallback,
+  readGuardAccess,
   readImmediate,
   readStatus,
   readTotal,

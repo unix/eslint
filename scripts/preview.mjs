@@ -56,6 +56,61 @@ const fixPreviewCases = [
   },
 ]
 
+const diagnosticPreviewCases = [
+  {
+    config: 'configs/js.js',
+    expectedRuleIds: ['prettier/prettier'],
+    filePath: 'fixtures/js/direct-return-whitespace.js',
+    name: 'js direct return whitespace diagnostics',
+    source: [
+      'const readAccess = context => {',
+      '  const required = String(context)',
+      ' ',
+      '  return Boolean(required)',
+      '}',
+      '',
+      'export { readAccess }',
+      '',
+    ].join('\n'),
+  },
+  {
+    config: 'configs/js.js',
+    expectedRuleIds: [],
+    filePath: 'fixtures/js/compact-return-if-blank-line.js',
+    name: 'js compact return-if blank line diagnostics',
+    source: [
+      'const readAccess = context => {',
+      '  const required = String(context)',
+      '',
+      '  if (required) return true',
+      '',
+      '  return false',
+      '}',
+      '',
+      'export { readAccess }',
+      '',
+    ].join('\n'),
+  },
+  {
+    config: 'configs/js.js',
+    expectedRuleIds: ['prettier/prettier'],
+    filePath: 'fixtures/js/compact-return-if-whitespace.js',
+    name: 'js compact return-if whitespace diagnostics',
+    source: [
+      'const readAccess = context => {',
+      '  const required = String(context)',
+      ' ',
+      '  if (required) return true',
+      '',
+      '  return false',
+      '}',
+      '',
+      'export { readAccess }',
+      '',
+    ].join('\n'),
+  },
+]
+
 let hasUnexpectedResult = false
 
 for (const previewCase of previewCases) {
@@ -87,6 +142,43 @@ for (const previewCase of previewCases) {
   hasUnexpectedResult = true
   console.error(
     `unexpected exit: got ${result.status}, expected ${previewCase.expectedStatus}`,
+  )
+}
+
+for (const diagnosticPreviewCase of diagnosticPreviewCases) {
+  console.log(`\n> ${diagnosticPreviewCase.name}`)
+
+  const { default: config } = await import(
+    pathToFileURL(resolve(root, diagnosticPreviewCase.config))
+  )
+  const eslint = new ESLint({
+    overrideConfig: config,
+    overrideConfigFile: true,
+  })
+  const [result] = await eslint.lintText(diagnosticPreviewCase.source, {
+    filePath: resolve(root, diagnosticPreviewCase.filePath),
+  })
+  const ruleIds = result.messages.map(message => message.ruleId)
+
+  if (
+    ruleIds.length === diagnosticPreviewCase.expectedRuleIds.length &&
+    ruleIds.every(
+      (ruleId, index) => ruleId === diagnosticPreviewCase.expectedRuleIds[index],
+    )
+  ) {
+    console.log(`ok: diagnostics match ${ruleIds.join(', ') || '(none)'}`)
+    continue
+  }
+
+  hasUnexpectedResult = true
+  console.error('unexpected diagnostics')
+  console.error(
+    result.messages
+      .map(
+        message =>
+          `${message.line}:${message.column} ${message.ruleId} ${message.message}`,
+      )
+      .join('\n'),
   )
 }
 
